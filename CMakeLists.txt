@@ -59,6 +59,7 @@ elseif(WITH_GOOGLE_TEST)
 	target_link_libraries(
   		gtest_version
   		GTest::gtest_main
+		helloworld
 	)
 
 	include(GoogleTest)
