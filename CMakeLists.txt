@@ -5,7 +5,8 @@ set(PROJECT_VESRION 0.0.${PATCH_VERSION})
 
 project(helloworld VERSION ${PROJECT_VESRION})
 
-option(WITH_BOOST_TEST "Whether to build Boost test" ON)
+option(WITH_BOOST_TEST "Whether to build Boost test" OFF)
+option(WITH_GOOGLE_TEST "Whether to build Boost test" ON)
 
 configure_file(version.h.in version.h)
 
@@ -27,22 +28,32 @@ target_link_libraries(helloworld_cli PRIVATE
 
 if(WITH_BOOST_TEST)
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
-    add_executable(test_version test_version.cpp)
+    add_executable(btest_version btest_version.cpp)
 
-    set_target_properties(test_version PROPERTIES
+    set_target_properties(btest_version PROPERTIES
         CXX_STANDARD 14
         CXX_STANDARD_REQUIRED ON
     )
 
-    set_target_properties(test_version PROPERTIES
+    set_target_properties(btest_version PROPERTIES
         COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
         INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
     )
 
-    target_link_libraries(test_version
+    target_link_libraries(btest_version
         ${Boost_LIBRARIES}
         helloworld
     )
+elseif(WITH_GOOGLE_TEST)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+
 endif()
 
 if (MSVC)
@@ -53,7 +64,7 @@ if (MSVC)
         /W4
     )
     if(WITH_BOOST_TEST)
-        target_compile_options(test_version PRIVATE
+        target_compile_options(btest_version PRIVATE
             /W4
         )
     endif()
@@ -65,7 +76,7 @@ else ()
         -Wall -Wextra -pedantic -Werror
     )
     if(WITH_BOOST_TEST)
-        target_compile_options(test_version PRIVATE
+        target_compile_options(btest_version PRIVATE
             -Wall -Wextra -pedantic -Werror
         )
     endif()
@@ -82,5 +93,8 @@ include(CPack)
 
 if(WITH_BOOST_TEST)
     enable_testing()
-    add_test(test_version test_version)
+    add_test(btest_version btest_version)
+elseif(WITH_GOOGLE_TEST)
+    enable_testing()
+    add_test(gtest_version gtest_version)
 endif()
